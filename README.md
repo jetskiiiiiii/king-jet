@@ -4,11 +4,15 @@ links:
 - https://stackoverflow.com/questions/64112652/pygame-sometimes-not-detecting-key-presses
 
 TODO:
-- (done) get color of chessboard square when arbitrarily picked
-- optimize get_center_coor function in Piece to be generalized
-- split program into multiple files
+- (DONE) get color of chessboard square when arbitrarily picked
+- (DONE) optimize get_center_coor function in Piece to be generalized
+- (DONE) split program into multiple files
 - program legal moves
-- legal moves only account for black pieces (white pieces go in other direction)
+    - proper piece hints in all situations
+    - make pieces move
+    - multi-touch
+    - piece interaction with other pieces
+- (DONE) legal moves only account for black pieces (white pieces go in other direction)
 
 Credits:
 - Chess piece art: JohnPablok's improved Cburnett chess set. https://opengameart.org/content/chess-pieces-and-board-squares
