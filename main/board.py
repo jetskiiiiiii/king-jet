@@ -58,11 +58,13 @@ class BoardStatus():
 class BoardLogic():
     def __init__(self):
         self.turn = "light"
+        self.toggle_move_piece = False
         self.moves = []
         self.pieces_captured_by_light = []
         self.pieces_captured_by_dark = []
         self.clicked_square = ()
         self.last_clicked_square = ()
+        self.toggle_show_hints = False
         self.last_hints_shown = []
         self.pieces_array = [
             King("dark"),

@@ -16,10 +16,6 @@ chessboard_status = BoardStatus()
 chessboard_logic = BoardLogic()
 chessboard = Board(screen, chessboard_status, chessboard_logic) 
 
-# Outside of MAIN loop because need to be remembered
-show_hint = False
-move_piece = False
-
 ## Main pygame loop
 while running:
     event_list = pygame.event.get()
@@ -40,30 +36,36 @@ while running:
             chessboard_logic.clicked_square = (mouse_pos[0] // tile_size, mouse_pos[1] // tile_size) # Tuple of position of square (unscaled)
 
             clicked_square, last_clicked_square = chessboard_logic.clicked_square, chessboard_logic.last_clicked_square
+            piece_of_clicked_square = chessboard_status.status[clicked_square].occupied_by
+            is_correct_side_clicked = True if (piece_of_clicked_square is not None) and (piece_of_clicked_square.side == chessboard_logic.turn) else False
 
             # Toggle hint on
             if chessboard.is_click_inside_board(clicked_square):
                 # If piece is already showing hints, clicking it again will make hints disappear
-                if show_hint:
+                if chessboard_logic.toggle_show_hints:
+                    # Toggle hints might be true when player clicks on opposite side
+                    if not is_correct_side_clicked:
+                        chessboard_logic.toggle_show_hints = False
                     # If player clicks on same piece while hints are showing, hints will disappear
                     if clicked_square == last_clicked_square:
-                        show_hint = False
+                        chessboard_logic.toggle_show_hints = False
                         break
                     # If hints are shown and player clicks on a hint, move piece
                     elif clicked_square in chessboard_logic.last_hints_shown:
-                        show_hint = False
-                        move_piece = True
+                        chessboard_logic.toggle_show_hints = False
+                        chessboard_logic.toggle_move_piece = True
                         break
                 # If piece is clicked and square is occupied, show hints
-                if chessboard_status.status[clicked_square].occupied == True:
-                    show_hint = True
+                elif chessboard_status.status[clicked_square].occupied == True and is_correct_side_clicked:
+                    chessboard_logic.toggle_show_hints = True
 
-    if show_hint:
+    if chessboard_logic.toggle_show_hints:
         chessboard.draw_piece_hints()
 
-    if move_piece:
+    if chessboard_logic.toggle_move_piece:
         chessboard.move_piece()
-        move_piece = False
+        chessboard_logic.toggle_move_piece = False
+        chessboard_logic.turn = "dark" if chessboard_logic.turn == "light" else "light"
 
     pygame.display.update()
     clock.tick(60)
