@@ -36,8 +36,8 @@ while running:
             chessboard_logic.clicked_square = (mouse_pos[0] // tile_size, mouse_pos[1] // tile_size) # Tuple of position of square (unscaled)
 
             clicked_square, last_clicked_square = chessboard_logic.clicked_square, chessboard_logic.last_clicked_square
-            piece_of_clicked_square = chessboard_status.status[clicked_square].occupied_by
-            is_correct_side_clicked = True if (piece_of_clicked_square is not None) and (piece_of_clicked_square.side == chessboard_logic.turn) else False
+            piece_of_clicked_square = chessboard_status.status[clicked_square]
+            is_correct_side_clicked = True if (piece_of_clicked_square.occupied) and (piece_of_clicked_square.occupied_by.side == chessboard_logic.turn) else False
 
             # Toggle hint on
             if chessboard.is_click_inside_board(clicked_square):

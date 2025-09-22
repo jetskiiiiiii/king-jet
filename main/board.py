@@ -158,7 +158,9 @@ class Board():
     def draw_piece_hints(self):
         square_clicked = self.board_logic.clicked_square
         piece = self.board_status.status[square_clicked].occupied_by
-        legal_moves = self.get_legal_hints(piece)
+        legal_moves, legal_attacks = self.get_legal_hints(piece)
+        
+        # TODO: PROGRAM LEGAL ATTACKS UI
         
         # Update board status/logic
         for hint in self.board_logic.last_hints_shown:
@@ -193,16 +195,22 @@ class Board():
             return []
 
         initial_hints = piece.get_legal_moves()
-        refined_hints, obstructions = [], [] # Will store slope + distance
+        refined_hints, attack_hints, obstructions = [], [], [] # Will store slope + distance
         for move in initial_hints:
             vector = (move[0] - piece.current_pos_col, move[1] - piece.current_pos_row)
             angle = math.atan2(vector[1], vector[0])
+            status_square_clicked = self.board_status.status[move]
             
-            # If square is occupied, move to next square
-            if (self.board_status.status[move].occupied == True) or (angle in obstructions):
-                # Only need first obstruction in path
-                if angle not in obstructions:
-                    obstructions.append(angle)
+            # If square is occupied, mark path as having obstructions, move to next square
+            if (status_square_clicked.occupied):
+                obstructions.append(angle)
+                # If piece occupying square is opposite colored, piece can attack square
+                if status_square_clicked.occupied_by.side != self.board_logic.turn:
+                    attack_hints.append(angle)
+                continue
+            # If path has obstructions, move to next square
+            # TODO: Make this more efficient by eliminating the entire angle 
+            elif angle in obstructions:
                 continue
             else:
                 refined_hints.append(move)
@@ -214,7 +222,7 @@ class Board():
             #else:
             #refined_hints.append(move)
 
-        return refined_hints
+        return refined_hints, attack_hints
 
 
     # TODO: Implement move tracker
