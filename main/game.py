@@ -1,7 +1,4 @@
 import pygame
-import os
-import numpy as np
-from typing import List, Optional, Tuple
 
 from resources.ui import *
 from pieces import *
@@ -15,39 +12,13 @@ running = True
 dt = 0
 player_pos = pygame.Vector2(screen.get_width() / 2, screen.get_height() / 2)
 
-
-pieces_array = [
-    King("dark"),
-    King("light"),
-
-    Queen("dark"),
-    Queen("light"),
-
-    Bishop("dark", 0),
-    Bishop("dark", 1),
-    Bishop("light", 0),
-    Bishop("light", 1),
-
-    Knight("dark", 0),
-    Knight("dark", 1),
-    Knight("light", 0),
-    Knight("light", 1),
-
-    Rook("dark", 0),
-    Rook("dark", 1),
-    Rook("light", 0),
-    Rook("light", 1),
-
-    *[Pawn("dark", count) for count in range(8)],
-    *[Pawn("light", count) for count in range(8)],
-]
-
-
-chessboard = Board() 
+chessboard_status = BoardStatus()
+chessboard_logic = BoardLogic()
+chessboard = Board(screen, chessboard_status, chessboard_logic) 
 
 # Outside of MAIN loop because need to be remembered
-clicked_piece: Piece | None = None
-reset_squares_at_these_coors = []
+show_hint = False
+move_piece = False
 
 ## Main pygame loop
 while running:
@@ -55,9 +26,8 @@ while running:
     screen.fill(background)
 
     ## Render chess pieces
-    chessboard.draw_pieces_start(pieces_array)
-    ## Draw chess board
-    screen.blit(chessboard.board_surface, (0, 0))
+    chessboard.draw_pieces()
+    chessboard.fill_rest_of_board()
 
     for event in event_list:
         dirty_rects = []
@@ -66,33 +36,34 @@ while running:
         ## get_pressed returns either 3 or 5 buttons
         if pygame.mouse.get_pressed()[0]:
             mouse_pos = pygame.mouse.get_pos()
-            # Detect if piece has been clicked 
-            
-            if len(reset_squares_at_these_coors) > 0:
-                dirty_rects = chessboard.remove_piece_hints(reset_squares_at_these_coors) 
-                reset_squares_at_these_coors = []
-                pygame.display.update(dirty_rects)
+            chessboard_logic.last_clicked_square = chessboard_logic.clicked_square
+            chessboard_logic.clicked_square = (mouse_pos[0] // tile_size, mouse_pos[1] // tile_size) # Tuple of position of square (unscaled)
 
-            new_clicked_piece: Piece | None = None
-            for piece in pieces_array:
-                # TODO: Prevent calculating if same piece is clicked
-                if piece.current_hitbox.collidepoint(mouse_pos) and (not piece.is_clicked):
-                    new_clicked_piece = piece
-                    piece.is_clicked = True
-                    hints, reset_squares_at_these_coors = chessboard.draw_piece_hints(piece)
-                    # print(reset_squares_at_these_coors)
-                    dirty_rects = hints
-                    pygame.display.update(dirty_rects)
-                    break # If piece was clicked, break loop
-            # If clicked piece didn't change, there was a click on an empty square
-            if (new_clicked_piece is None) and (clicked_piece is not None):
-                dirty_rects = chessboard.move_piece(mouse_pos, clicked_piece)
-                pygame.display.update(dirty_rects)
-                clicked_piece = None
-            else:
-                clicked_piece = new_clicked_piece # If the new clicked piece is different than the last, the user has decided to change piece they want to move
+            clicked_square, last_clicked_square = chessboard_logic.clicked_square, chessboard_logic.last_clicked_square
 
-            # Detect if mouse click 1) after clicking piece 2) on a legal move or on another piece
+            # Toggle hint on
+            if chessboard.is_click_inside_board(clicked_square):
+                # If piece is already showing hints, clicking it again will make hints disappear
+                if show_hint:
+                    # If player clicks on same piece while hints are showing, hints will disappear
+                    if clicked_square == last_clicked_square:
+                        show_hint = False
+                        break
+                    # If hints are shown and player clicks on a hint, move piece
+                    elif clicked_square in chessboard_logic.last_hints_shown:
+                        show_hint = False
+                        move_piece = True
+                        break
+                # If piece is clicked and square is occupied, show hints
+                if chessboard_status.status[clicked_square].occupied == True:
+                    show_hint = True
+
+    if show_hint:
+        chessboard.draw_piece_hints()
+
+    if move_piece:
+        chessboard.move_piece()
+        move_piece = False
 
     pygame.display.update()
     clock.tick(60)

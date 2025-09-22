@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 
 from resources.ui import *
 
-pieces_image_path = "main/resources/art/"
+pieces_image_path = "resources/art/"
 
 class Piece():
     def __init__(self,
@@ -33,22 +33,22 @@ class Piece():
         self.name = f"{piece_type}_{"dark" if self.is_dark else "light"}{f"_{count}" if (self.count is not None) else ""}"
 
         self.image_file_name = image_file_name
-        self.image = pygame.image.load(os.path.join(pieces_image_path, self.image_file_name)).convert_alpha()
-        self.image_width = self.image.get_width()
-        self.image_height = self.image.get_height()
-        self.start_pos_row = start_pos_row * self.tile_size
-        self.start_pos_col = start_pos_col * self.tile_size
+        self.image_prescale = pygame.image.load(os.path.join(pieces_image_path, self.image_file_name)).convert_alpha()
+        self.image_prescale_width = self.image_prescale.get_width()
+        self.image_prescale_height = self.image_prescale.get_height()
+        self.start_pos_row = start_pos_row
+        self.start_pos_col = start_pos_col
 
         ## Modified properties
-        self.scaled_image = self.scale_piece()
-        self.scaled_image_width = self.scaled_image.get_width()
-        self.scaled_image_height = self.scaled_image.get_height()
-        self.center_pos_row, self.center_pos_col = self.get_center_coor()
+        self.image = self.scale_piece()
+        self.width = self.image.get_width()
+        self.height = self.image.get_height()
+        #self.center_pos_row, self.center_pos_col = self.get_center_coor()
 
         ## Surface and its properties
-        self.piece_surface = self.blit_image_to_square()
-        self.current_hitbox = self.piece_surface.get_rect() # Scaled position
-        self.is_clicked = False
+        # self.piece_surface = self.blit_image_to_square()
+        # self.current_hitbox = self.piece_surface.get_rect() # Scaled position
+        # self.is_clicked = False
 
         ## Legal moves
         self.current_pos_row = current_pos_row
@@ -63,7 +63,7 @@ class Piece():
        
     def get_legal_moves(self):
         complete_legal_moves = []
-        print(self.name)
+        #print(self.name)
         for step in range(self.piece_range):
             step += 1
             for move in self.legal_moves:
@@ -81,24 +81,10 @@ class Piece():
         return complete_legal_moves 
 
     def scale_piece(self):
-        scale_by_width = self.tile_size // self.image_width
-        scale_by_height = self.tile_size // self.image_height
-        return pygame.transform.scale(self.image, (self.image_width * scale_by_width, self.image_height * scale_by_height))
+        scale_by_width = self.tile_size // self.image_prescale_width
+        scale_by_height = self.tile_size // self.image_prescale_height
+        return pygame.transform.scale(self.image_prescale, (self.image_prescale_width * scale_by_width, self.image_prescale_height * scale_by_height))
 
-    def get_center_coor(self):
-        offset_width = self.tile_size - self.scaled_image_width
-        offset_height = self.tile_size - self.scaled_image_height
-
-        return offset_width / 2, offset_height / 2
-
-    def blit_image_to_square(self):
-        piece_surface = pygame.Surface((self.tile_size, self.tile_size))
-
-        piece_surface.fill(key_color)
-        piece_surface.blit(self.scaled_image, (self.center_pos_col, self.center_pos_row))
-        piece_surface.set_colorkey(key_color)
-
-        return piece_surface
 
 ## Create separate classes for each piece to set moving rules
 class King(Piece):
@@ -321,6 +307,7 @@ class Pawn(Piece):
         self.image_file_name = f"{self.piece_type}{1 if self.is_dark else ""}.png"
 
         ## Legal moves
+        ## En peassant enforced in board (get_legal_hints) to get context
         self.current_pos_row = self.start_pos_row
         self.current_pos_col = self.start_pos_col
         ## Pawns can only move forward, so black and white have different moves
